@@ -1,0 +1,5 @@
+
+
+
+phi=rand(1);%均匀分布的随机相位
+sn=sin(2*pi*n/N+phi)
