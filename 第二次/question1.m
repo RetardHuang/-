@@ -78,17 +78,19 @@ Jwmin3=expectedpower-p'*wmin3;hold on;
 
 % vn=noisepower*randn(1,N/4+N);
 % un=sn+vn(N/4+1:end);
-
+figure(3)
+mesh(w0,w1,Jw)
 EIGENVALUE=eig(R)%这里显示出 协方差矩阵的特征值 
 MAXMU=2/max(EIGENVALUE);
 mu=1;
 maxerror=.000004;%最大允许误差
 
-w=[0 0]';%确定w0
+w=[10 10]';%确定w0
 wnew=zeros(M,1); 
 Jwnew=0;
 Jw=0;
 deltaw=zeros(M,1);  
+
 for iternumber=1:100
 
     Jw=expectedpower-2*p'*w+w'*R*w;
