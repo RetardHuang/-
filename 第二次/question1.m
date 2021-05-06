@@ -12,7 +12,7 @@ w0=-20:1:20;
 w1=-20:1:20;
 [w0,w1]=meshgrid(w0,w1);
 Jw=(0.5+noisepower)*(w0.^2+w1.^2)+cos(2*pi/N)*w0.*w1+2*w1*sin(2*pi/N)+2;
-surf(Jw)
+surf(w0,w1,Jw)
 title("第一问的性能曲面")
 %%
 % 第（2）问
@@ -24,7 +24,7 @@ w0=-20:1:20;
 w1=-20:1:20;
 [w0,w1]=meshgrid(w0,w1);
 Jw=(0.5+noisepower)*(w0.^2+w1.^2)+cos(2*pi/N)*w0.*w1+2*w1*sin(2*pi/N)+2;
-surf(Jw)
+surf(w0,w1,Jw)
 title("第二问的性能曲面")
 
 rm=zeros(1,M);%自相关函数,索引1对应着n=0的情况
@@ -38,7 +38,7 @@ p=pnegm';
 
 R=toeplitz(rm);%协方差矩阵，此东西是N*N维的！
 
-wmin2=R\p;
+wmin2=inv(R)*p;
 Jwmin2=expectedpower-2*p'*wmin2+wmin2'*R*wmin2;
 
 %%
@@ -47,11 +47,9 @@ N=16;
 noisepower=0.5;
 figure(3)
 % Jw=noisepwoer-2p'*w+w'*R*w%代价函数（误差性能面）
-w0=-20:1:20;
-w1=-20:1:20;
-[w0,w1]=meshgrid(w0,w1);
+[w0,w1]=meshgrid(-20:.1:20,-20:.1:20);
 Jw=(0.5+noisepower)*(w0.^2+w1.^2)+cos(2*pi/N)*w0.*w1+2*w1*sin(2*pi/N)+2;
-surf(Jw)
+surf(w0,w1,Jw)
 title("第三问的性能曲面")
 
 rm=zeros(1,M);%自相关函数,索引1对应着n=0的情况
@@ -66,7 +64,7 @@ p=pnegm';
 R=toeplitz(rm);%协方差矩阵，此东西是N*N维的！
 
 wmin3=R\p;
-Jwmin3=expectedpower-p'*wmin3+wmin3'*R*wmin3;
+Jwmin3=expectedpower-p'*wmin3+wmin3'*R*wmin3;hold on;
 
 %%
 % 第（4）问
@@ -82,21 +80,36 @@ vn=noisepower*randn(1,N/4+N);
 un=sn+vn(N/4+1:end);
 
 EIGENVALUE=eig(R)%这里显示出 协方差矩阵的特征值 
+MAXMU=2/max(EIGENVALUE);
 mu=0.2;
-maxerror=0.02;%最大允许误差
+maxerror=.0004;%最大允许误差
 
-w=[0 3]';%确定w0
-figure(4)
-title("学习曲线")
+w=[0 20]';%确定w0
+wnew=zeros(M,1); 
+Jwnew=0;
+Jw=0;
+deltaw=zeros(M,1);
 for iternumber=1:100
-    deltaw=-mu*(-2*p+2*R*w)/2;
-    w=w+deltaw;
-    Jw=expectedpower-p'*w+w'*R*w;
-    error=(Jw-Jwmin3)/Jwmin3;
-    plot(iternumber,error,"o")
-    hold on
-    if(norm(error)<maxerror)
+
+    Jw=expectedpower-2*p'*w+w'*R*w;
+%     Jw=(0.5+noisepower)*(w(1).^2+w(2).^2)+cos(2*pi/N)*w(1).*w(2)+2*w(2)*sin(2*pi/N)+2;
+    error=Jw-Jwmin3;
+
+    if(error<maxerror)
         break
+    else
+        gradient=-2*p+2*R*w;
+        deltaw=-mu*gradient/2;
+        wnew=w+deltaw;
+        Jwnew=expectedpower-2*p'*wnew+wnew'*R*wnew;
+        figure(3)
+        quiver3(w(1),w(2),Jw,deltaw(1),deltaw(2),Jwnew-Jw);
+        figure(4)
+        title("学习曲线")
+        plot(iternumber,error,"o")
+        hold on
+        w=wnew;
+        Jw=Jwnew;
     end
 end
 %%
